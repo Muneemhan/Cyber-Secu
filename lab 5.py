@@ -10,13 +10,21 @@ hv_tif_path = "C:\\Users\\ASUS PC\\PycharmProjects\\pythonProject\\Data\\ALPSRP2
 with rasterio.open(hh_tif_path) as hh_dataset, rasterio.open(hv_tif_path) as hv_dataset:
     hh_data = hh_dataset.read(1)  # Read the first band
     hv_data = hv_dataset.read(1)  # Read the first band
-# Calculate the log ratio
-combined_data = np.log(hh_data) - np.log(hv_data)
+# Normalize the data to a common range for visualization
+hh_normalized = (hh_data - np.min(hh_data)) / (np.max(hh_data) - np.min(hh_data))
+hv_normalized = (hv_data - np.min(hv_data)) / (np.max(hv_data) - np.min(hv_data))
 
+# Create the color composite
+rgb_image = np.zeros((hh_data.shape[0], hv_data.shape[1], 3), dtype=np.float32)
+rgb_image[:, :, 0] = hh_normalized  # Red channel for HH
+rgb_image[:, :, 1] = hv_normalized  # Green channel for HV
+
+# Clip values to ensure they are within the valid range [0, 1]
+rgb_image = np.clip(rgb_image, 0, 1)
 plt.figure(figsize=(8, 8))
-
-plt.imshow(combined_data, cmap='viridis', vmin=0, vmax=1)  # Adjust vmin and vmax as needed
-plt.colorbar(label="Log Ratio")
-plt.title("HH-HV Composite")
-
+plt.imshow(rgb_image)
+plt.title("HH-HV Color Composite")
+plt.axis('off')  # Turn off axes
 plt.show()
+# Choose a colormap that highlights the HV data
+colormap = plt.get_cmap("viridis")  # You can try other colormaps as well
